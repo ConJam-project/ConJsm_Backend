@@ -1,0 +1,39 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: conjam-backend
+
+  # 데이터베이스 설정 (H2 - 개발용)
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  # JPA 설정
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  # H2 콘솔 활성화 (개발용)
+  h2:
+    console:
+      enabled: true
+
+# KOPIS API 설정
+kopis:
+  api:
+    key: ${KOPIS_API_KEY:your-api-key-here}
+    base-url: ${KOPIS_BASE_URL:http://www.kopis.or.kr/openApi/restful}
+
+# 로깅 설정
+logging:
+  level:
+    com.conjam.backend: DEBUG
+    org.springframework.web: DEBUG
