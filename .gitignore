@@ -3,3 +3,4 @@ build
 gradlew
 gradlew.bat
 application.properties
+.idea

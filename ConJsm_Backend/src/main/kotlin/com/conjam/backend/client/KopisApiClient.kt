@@ -2,12 +2,13 @@ package com.conjam.backend.client
 
 import com.conjam.backend.dto.PerformanceDetailResponse
 import com.conjam.backend.dto.PerformanceListResponse
-import com.fasterxml.jackson.dataformat.xml.XmlMapper
+import com.conjam.backend.exception.ExternalApiException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.reactive.function.client.awaitBody
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -17,7 +18,6 @@ class KopisApiClient(
 ) {
 
     private val logger = LoggerFactory.getLogger(KopisApiClient::class.java)
-    private val xmlMapper = XmlMapper()
 
     @Value("\${kopis.api.key}")
     private lateinit var apiKey: String
@@ -36,7 +36,7 @@ class KopisApiClient(
      * 공연 목록 조회
      * KOPIS API 사용 시 필수 파라미터: service, stdate, eddate, cpage, rows
      */
-    fun getPerformanceList(
+    suspend fun getPerformanceList(
         page: Int,
         size: Int,
         genre: String?,
@@ -45,7 +45,7 @@ class KopisApiClient(
         endDate: String? = null
     ): PerformanceListResponse {
 
-        try {
+        return try {
             // 날짜가 없으면 현재 날짜 기준으로 설정 (최근 1개월)
             val today = LocalDate.now()
             val defaultStartDate = startDate ?: today.minusMonths(1).format(DateTimeFormatter.ofPattern("yyyyMMdd"))
@@ -78,76 +78,46 @@ class KopisApiClient(
 
             logger.info("KOPIS API 호출: $baseUrl$uri")
 
-            val xmlResponse = client.get()
+            val response = client.get()
                 .uri(uri)
                 .retrieve()
-                .bodyToMono(String::class.java)
-                .block()
-
-            logger.info("KOPIS API XML 응답 길이: ${xmlResponse?.length}")
-            logger.debug("KOPIS API XML 응답: $xmlResponse")
-
-            val response = if (!xmlResponse.isNullOrBlank()) {
-                try {
-                    xmlMapper.readValue(xmlResponse, PerformanceListResponse::class.java)
-                } catch (e: Exception) {
-                    logger.error("XML 파싱 오류", e)
-                    PerformanceListResponse()
-                }
-            } else {
-                PerformanceListResponse()
-            }
+                .awaitBody<PerformanceListResponse>()
 
             logger.info("KOPIS API 응답: ${response.performances.size}건의 공연 정보")
-            return response
+            response
 
         } catch (e: WebClientResponseException) {
             logger.error("KOPIS API 호출 오류: ${e.statusCode} - ${e.responseBodyAsString}")
-            return PerformanceListResponse()
+            throw ExternalApiException("KOPIS API 호출 실패: ${e.statusCode}", cause = e)
         } catch (e: Exception) {
             logger.error("KOPIS API 호출 중 예외 발생", e)
-            return PerformanceListResponse()
+            throw ExternalApiException("KOPIS API 호출 중 예외 발생", cause = e)
         }
     }
 
     /**
      * 공연 상세 조회
      */
-    fun getPerformanceDetail(performanceId: String): PerformanceDetailResponse {
-        try {
+    suspend fun getPerformanceDetail(performanceId: String): PerformanceDetailResponse {
+        return try {
             val uri = "/pblprfr/$performanceId?service=$apiKey"
 
             logger.info("KOPIS API 상세 조회: $baseUrl$uri")
 
-            val xmlResponse = client.get()
+            val response = client.get()
                 .uri(uri)
                 .retrieve()
-                .bodyToMono(String::class.java)
-                .block()
-
-            logger.info("KOPIS API 상세 XML 응답 길이: ${xmlResponse?.length}")
-            logger.debug("KOPIS API 상세 XML 응답: $xmlResponse")
-
-            val response = if (!xmlResponse.isNullOrBlank()) {
-                try {
-                    xmlMapper.readValue(xmlResponse, PerformanceDetailResponse::class.java)
-                } catch (e: Exception) {
-                    logger.error("XML 파싱 오류", e)
-                    PerformanceDetailResponse()
-                }
-            } else {
-                PerformanceDetailResponse()
-            }
+                .awaitBody<PerformanceDetailResponse>()
 
             logger.info("KOPIS API 상세 응답: ${response.performance?.title}")
-            return response
+            response
 
         } catch (e: WebClientResponseException) {
             logger.error("KOPIS API 상세 조회 오류: ${e.statusCode} - ${e.responseBodyAsString}")
-            return PerformanceDetailResponse()
+            throw ExternalApiException("KOPIS API 상세 조회 실패: ${e.statusCode}", cause = e)
         } catch (e: Exception) {
             logger.error("KOPIS API 상세 조회 중 예외 발생", e)
-            return PerformanceDetailResponse()
+            throw ExternalApiException("KOPIS API 상세 조회 중 예외 발생", cause = e)
         }
     }
 }

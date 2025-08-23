@@ -25,7 +25,7 @@ class PerformanceController(
      * @param endDate 공연 종료일 (yyyyMMdd 형식, 예: 20250131)
      */
     @GetMapping
-    fun getPerformances(
+    suspend fun getPerformances(
         @RequestParam(defaultValue = "1") page: Int,
         @RequestParam(defaultValue = "10") size: Int,
         @RequestParam(required = false) genre: String?,
@@ -53,7 +53,7 @@ class PerformanceController(
      * @param performanceId 공연 ID (KOPIS mt20id)
      */
     @GetMapping("/{performanceId}")
-    fun getPerformanceDetail(
+    suspend fun getPerformanceDetail(
         @PathVariable performanceId: String
     ): ResponseEntity<PerformanceDetailResponse> {
 

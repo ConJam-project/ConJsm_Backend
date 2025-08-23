@@ -24,7 +24,7 @@ class PerformanceService(
      * @param startDate 공연 시작일 (yyyyMMdd)
      * @param endDate 공연 종료일 (yyyyMMdd)
      */
-    fun getPerformanceList(
+    suspend fun getPerformanceList(
         page: Int,
         size: Int,
         genre: String?,
@@ -43,24 +43,23 @@ class PerformanceService(
             else -> size
         }
 
-        val response = kopisApiClient.getPerformanceList(
+        return kopisApiClient.getPerformanceList(
             page = validPage,
             size = validSize,
             genre = genre,
             area = area,
             startDate = startDate,
             endDate = endDate
-        )
-
-        logger.info("공연 목록 조회 완료 - ${response.performances.size}건")
-        return response
+        ).also { response ->
+            logger.info("공연 목록 조회 완료 - ${response.performances.size}건")
+        }
     }
 
     /**
      * 공연 상세 조회
      * @param performanceId 공연 ID (mt20id)
      */
-    fun getPerformanceDetail(performanceId: String): PerformanceDetailResponse {
+    suspend fun getPerformanceDetail(performanceId: String): PerformanceDetailResponse {
 
         logger.info("공연 상세 조회 요청 - ID: $performanceId")
 
@@ -69,13 +68,11 @@ class PerformanceService(
             throw InvalidParameterException("공연 ID가 비어있습니다.")
         }
 
-        val response = kopisApiClient.getPerformanceDetail(performanceId)
-
-        if (response.performance == null) {
-            throw DataNotFoundException("공연 정보를 찾을 수 없습니다. ID: $performanceId")
+        return kopisApiClient.getPerformanceDetail(performanceId).also { response ->
+            if (response.performance == null) {
+                throw DataNotFoundException("공연 정보를 찾을 수 없습니다. ID: $performanceId")
+            }
+            logger.info("공연 상세 조회 완료 - ${response.performance.title}")
         }
-
-        logger.info("공연 상세 조회 완료 - ${response.performance.title}")
-        return response
     }
 }
