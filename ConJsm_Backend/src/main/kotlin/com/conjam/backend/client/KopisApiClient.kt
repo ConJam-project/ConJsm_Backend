@@ -78,10 +78,32 @@ class KopisApiClient(
 
             logger.info("KOPIS API 호출: $baseUrl$uri")
 
-            val response = client.get()
+            // 먼저 원시 응답을 문자열로 받아서 로깅
+            val rawResponse = client.get()
                 .uri(uri)
                 .retrieve()
-                .awaitBody<PerformanceListResponse>()
+                .awaitBody<String>()
+
+            logger.info("KOPIS API 원시 응답: $rawResponse")
+
+            // 실제 응답이 비어있거나 에러인지 확인
+            if (rawResponse.isBlank()) {
+                throw ExternalApiException("KOPIS API 응답이 비어있습니다")
+            }
+
+            // 에러 응답인지 확인 (KOPIS API는 에러도 XML로 반환)
+            if (rawResponse.contains("<error>") || rawResponse.contains("ERROR")) {
+                throw ExternalApiException("KOPIS API 에러 응답: $rawResponse")
+            }
+
+            // XML 파싱 시도 - ObjectMapper를 직접 사용
+            val objectMapper = com.fasterxml.jackson.dataformat.xml.XmlMapper()
+            val response = try {
+                objectMapper.readValue(rawResponse, PerformanceListResponse::class.java)
+            } catch (e: Exception) {
+                logger.error("XML 파싱 실패. 원시 응답: $rawResponse", e)
+                throw ExternalApiException("XML 파싱 실패: ${e.message}. 원시 응답: $rawResponse", cause = e)
+            }
 
             logger.info("KOPIS API 응답: ${response.performances.size}건의 공연 정보")
             response
@@ -90,8 +112,8 @@ class KopisApiClient(
             logger.error("KOPIS API 호출 오류: ${e.statusCode} - ${e.responseBodyAsString}")
             throw ExternalApiException("KOPIS API 호출 실패: ${e.statusCode}", cause = e)
         } catch (e: Exception) {
-            logger.error("KOPIS API 호출 중 예외 발생", e)
-            throw ExternalApiException("KOPIS API 호출 중 예외 발생", cause = e)
+            logger.error("KOPIS API 호출 중 예외 발생: ${e.message}", e)
+            throw ExternalApiException("KOPIS API 호출 중 예외 발생: ${e.message}", cause = e)
         }
     }
 
@@ -119,5 +141,17 @@ class KopisApiClient(
             logger.error("KOPIS API 상세 조회 중 예외 발생", e)
             throw ExternalApiException("KOPIS API 상세 조회 중 예외 발생", cause = e)
         }
+    }
+
+    /**
+     * 디버깅을 위한 API 설정 정보 확인
+     */
+    fun getDebugInfo(): Map<String, Any> {
+        return mapOf(
+            "baseUrl" to baseUrl,
+            "apiKeyConfigured" to apiKey.isNotBlank(),
+            "apiKeyLength" to apiKey.length,
+            "apiKeyPrefix" to if (apiKey.length >= 10) apiKey.take(10) + "..." else apiKey
+        )
     }
 }

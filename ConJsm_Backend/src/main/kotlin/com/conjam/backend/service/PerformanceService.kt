@@ -1,10 +1,12 @@
 package com.conjam.backend.service
 
 import com.conjam.backend.client.KopisApiClient
+import com.conjam.backend.dto.ApiConfigResponse
 import com.conjam.backend.dto.PerformanceDetailResponse
 import com.conjam.backend.dto.PerformanceListResponse
-import com.conjam.backend.exception.DataNotFoundException
+import com.conjam.backend.exception.ErrorCode
 import com.conjam.backend.exception.InvalidParameterException
+import com.conjam.backend.exception.PerformanceNotFoundException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
@@ -56,6 +58,18 @@ class PerformanceService(
     }
 
     /**
+     * KOPIS API 설정 정보 확인 (디버깅용)
+     */
+    fun getApiConfig(): ApiConfigResponse {
+        val debugInfo = kopisApiClient.getDebugInfo()
+        return ApiConfigResponse(
+            apiKeyConfigured = debugInfo["apiKeyConfigured"] as? Boolean ?: false,
+            baseUrl = debugInfo["baseUrl"] as? String ?: "",
+            maskedApiKey = debugInfo["maskedApiKey"] as? String
+        )
+    }
+
+    /**
      * 공연 상세 조회
      * @param performanceId 공연 ID (mt20id)
      */
@@ -65,12 +79,19 @@ class PerformanceService(
 
         // 파라미터 검증
         if (performanceId.isBlank()) {
-            throw InvalidParameterException("공연 ID가 비어있습니다.")
+            throw InvalidParameterException(
+                message = "공연 ID가 비어있습니다.",
+                errorCode = ErrorCode.PERFORMANCE_ID_INVALID,
+                userMessage = "올바른 공연 ID를 입력해주세요."
+            )
         }
 
         return kopisApiClient.getPerformanceDetail(performanceId).also { response ->
             if (response.performance == null) {
-                throw DataNotFoundException("공연 정보를 찾을 수 없습니다. ID: $performanceId")
+                throw PerformanceNotFoundException(
+                    message = "공연 정보를 찾을 수 없습니다. ID: $performanceId",
+                    userMessage = "요청하신 공연 정보가 존재하지 않습니다."
+                )
             }
             logger.info("공연 상세 조회 완료 - ${response.performance.title}")
         }

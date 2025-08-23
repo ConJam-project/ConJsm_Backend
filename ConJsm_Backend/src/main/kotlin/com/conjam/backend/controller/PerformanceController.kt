@@ -1,5 +1,8 @@
 package com.conjam.backend.controller
 
+import com.conjam.backend.dto.ApiConfigResponse
+import com.conjam.backend.dto.ErrorResponse
+import com.conjam.backend.dto.HealthCheckResponse
 import com.conjam.backend.dto.PerformanceDetailResponse
 import com.conjam.backend.dto.PerformanceListResponse
 import com.conjam.backend.service.PerformanceService
@@ -36,11 +39,13 @@ class PerformanceController(
             ),
             ApiResponse(
                 responseCode = "400", 
-                description = "잘못된 요청 파라미터"
+                description = "잘못된 요청 파라미터",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))]
             ),
             ApiResponse(
                 responseCode = "502", 
-                description = "외부 API 호출 실패"
+                description = "외부 API 호출 실패",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))]
             )
         ]
     )
@@ -92,11 +97,13 @@ class PerformanceController(
             ),
             ApiResponse(
                 responseCode = "404", 
-                description = "공연 정보를 찾을 수 없음"
+                description = "공연 정보를 찾을 수 없음",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))]
             ),
             ApiResponse(
                 responseCode = "502", 
-                description = "외부 API 호출 실패"
+                description = "외부 API 호출 실패",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))]
             )
         ]
     )
@@ -118,15 +125,30 @@ class PerformanceController(
     )
     @ApiResponse(
         responseCode = "200",
-        description = "API 서버 정상 상태"
+        description = "API 서버 정상 상태",
+        content = [Content(schema = Schema(implementation = HealthCheckResponse::class))]
     )
     @GetMapping("/health")
-    fun healthCheck(): Map<String, Any> {
-        return mapOf(
-            "status" to "UP",
-            "service" to "ConJam Performance API",
-            "timestamp" to System.currentTimeMillis(),
-            "description" to "KOPIS 공연예술통합전산망 연동 API"
+    fun healthCheck(): HealthCheckResponse {
+        return HealthCheckResponse(
+            status = "UP",
+            service = "ConJam Performance API",
+            timestamp = System.currentTimeMillis(),
+            description = "KOPIS 공연예술통합전산망 연동 API"
         )
+    }
+
+    @Operation(
+        summary = "KOPIS API 설정 확인",
+        description = "KOPIS API 키와 URL 설정을 확인하는 디버깅용 엔드포인트입니다."
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "API 설정 정보 조회 성공",
+        content = [Content(schema = Schema(implementation = ApiConfigResponse::class))]
+    )
+    @GetMapping("/debug/config")
+    fun debugConfig(): ApiConfigResponse {
+        return performanceService.getApiConfig()
     }
 }
