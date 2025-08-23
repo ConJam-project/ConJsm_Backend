@@ -1,34 +1,51 @@
+# Gradle
 .gradle
-build
-gradlew
-gradlew.bat
-application.properties
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
 
-# IDE 관련 파일들
-.idea/
-.vscode/
+# IntelliJ IDEA
+.idea
+*.iws
 *.iml
 *.ipr
-*.iws
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+# Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+# Visual Studio Code
+.vscode/
 
 # macOS
 .DS_Store
 
-# Windows
-Thumbs.db
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# 환경 변수 파일
+# Environment variables
 .env
 .env.local
-.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# 로그 파일
-logs/
-*.log
-
-# 임시 파일
-*.tmp
-*.temp
-
-# Cursor IDE 관련
-.cursorrules
+# Application properties with sensitive data
+application-prod.yml
+application-local.yml
