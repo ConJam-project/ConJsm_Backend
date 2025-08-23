@@ -3,4 +3,32 @@ build
 gradlew
 gradlew.bat
 application.properties
-.idea
+
+# IDE 관련 파일들
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# 환경 변수 파일
+.env
+.env.local
+.env.*.local
+
+# 로그 파일
+logs/
+*.log
+
+# 임시 파일
+*.tmp
+*.temp
+
+# Cursor IDE 관련
+.cursorrules

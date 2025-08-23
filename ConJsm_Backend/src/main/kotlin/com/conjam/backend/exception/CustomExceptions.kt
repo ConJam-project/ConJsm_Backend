@@ -5,7 +5,8 @@ package com.conjam.backend.exception
  */
 abstract class BusinessException(
     message: String,
-    val errorCode: String,
+    val errorCode: ErrorCode,
+    val userMessage: String? = null,
     cause: Throwable? = null
 ) : RuntimeException(message, cause)
 
@@ -14,24 +15,47 @@ abstract class BusinessException(
  */
 class ExternalApiException(
     message: String,
-    errorCode: String = "EXTERNAL_API_ERROR",
+    errorCode: ErrorCode = ErrorCode.EXTERNAL_API_ERROR,
+    userMessage: String? = null,
     cause: Throwable? = null
-) : BusinessException(message, errorCode, cause)
+) : BusinessException(message, errorCode, userMessage, cause)
+
+/**
+ * KOPIS API 호출 실패 예외
+ */
+class KopisApiException(
+    message: String,
+    errorCode: ErrorCode = ErrorCode.KOPIS_API_ERROR,
+    userMessage: String? = null,
+    cause: Throwable? = null
+) : BusinessException(message, errorCode, userMessage, cause)
 
 /**
  * 데이터를 찾을 수 없는 예외
  */
 class DataNotFoundException(
     message: String,
-    errorCode: String = "DATA_NOT_FOUND",
+    errorCode: ErrorCode = ErrorCode.DATA_NOT_FOUND,
+    userMessage: String? = null,
     cause: Throwable? = null
-) : BusinessException(message, errorCode, cause)
+) : BusinessException(message, errorCode, userMessage, cause)
+
+/**
+ * 공연 정보를 찾을 수 없는 예외
+ */
+class PerformanceNotFoundException(
+    message: String,
+    errorCode: ErrorCode = ErrorCode.PERFORMANCE_NOT_FOUND,
+    userMessage: String? = "요청하신 공연 정보를 찾을 수 없습니다.",
+    cause: Throwable? = null
+) : BusinessException(message, errorCode, userMessage, cause)
 
 /**
  * 잘못된 파라미터 예외
  */
 class InvalidParameterException(
     message: String,
-    errorCode: String = "INVALID_PARAMETER",
+    errorCode: ErrorCode = ErrorCode.INVALID_PARAMETER,
+    userMessage: String? = null,
     cause: Throwable? = null
-) : BusinessException(message, errorCode, cause)
+) : BusinessException(message, errorCode, userMessage, cause)

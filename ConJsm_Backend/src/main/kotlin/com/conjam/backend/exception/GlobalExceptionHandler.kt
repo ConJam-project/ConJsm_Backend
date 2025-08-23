@@ -22,22 +22,16 @@ class GlobalExceptionHandler {
         ex: BusinessException,
         request: WebRequest
     ): ResponseEntity<ErrorResponse> {
-        logger.warn("비즈니스 예외 발생: ${ex.message}", ex)
+        logger.warn("비즈니스 예외 발생 [${ex.errorCode.code}]: ${ex.message}", ex)
 
         val errorResponse = ErrorResponse(
-            errorCode = ex.errorCode,
-            message = ex.message ?: "비즈니스 로직 오류가 발생했습니다.",
+            errorCode = ex.errorCode.code,
+            errorMessage = ex.message ?: ex.errorCode.message,
+            userMessage = ex.userMessage,
             path = request.getDescription(false).substringAfter("uri=")
         )
 
-        val status = when (ex) {
-            is DataNotFoundException -> HttpStatus.NOT_FOUND
-            is InvalidParameterException -> HttpStatus.BAD_REQUEST
-            is ExternalApiException -> HttpStatus.BAD_GATEWAY
-            else -> HttpStatus.INTERNAL_SERVER_ERROR
-        }
-
-        return ResponseEntity.status(status).body(errorResponse)
+        return ResponseEntity.status(ex.errorCode.status).body(errorResponse)
     }
 
     /**
@@ -50,17 +44,19 @@ class GlobalExceptionHandler {
     ): ResponseEntity<ErrorResponse> {
         logger.error("외부 API 호출 오류: ${ex.statusCode} - ${ex.responseBodyAsString}", ex)
 
+        val errorCode = ErrorCode.KOPIS_API_ERROR
         val errorResponse = ErrorResponse(
-            errorCode = "EXTERNAL_API_ERROR",
-            message = "외부 서비스 연동 중 오류가 발생했습니다.",
+            errorCode = errorCode.code,
+            errorMessage = "외부 API 호출 중 오류가 발생했습니다. 상태코드: ${ex.statusCode}",
+            userMessage = "서비스 연동 중 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
             path = request.getDescription(false).substringAfter("uri="),
             details = mapOf(
                 "status" to ex.statusCode.value(),
-                "response" to ex.responseBodyAsString
+                "response" to ex.responseBodyAsString.take(200)
             )
         )
 
-        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(errorResponse)
+        return ResponseEntity.status(errorCode.status).body(errorResponse)
     }
 
     /**
@@ -73,13 +69,15 @@ class GlobalExceptionHandler {
     ): ResponseEntity<ErrorResponse> {
         logger.error("예상하지 못한 오류 발생", ex)
 
+        val errorCode = ErrorCode.INTERNAL_SERVER_ERROR
         val errorResponse = ErrorResponse(
-            errorCode = "INTERNAL_SERVER_ERROR",
-            message = "서버 내부 오류가 발생했습니다.",
+            errorCode = errorCode.code,
+            errorMessage = "예상하지 못한 서버 오류가 발생했습니다: ${ex.message}",
+            userMessage = "서버 내부 오류가 발생했습니다. 관리자에게 문의해주세요.",
             path = request.getDescription(false).substringAfter("uri=")
         )
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse)
+        return ResponseEntity.status(errorCode.status).body(errorResponse)
     }
 
     /**
@@ -92,12 +90,14 @@ class GlobalExceptionHandler {
     ): ResponseEntity<ErrorResponse> {
         logger.warn("잘못된 파라미터: ${ex.message}", ex)
 
+        val errorCode = ErrorCode.INVALID_PARAMETER
         val errorResponse = ErrorResponse(
-            errorCode = "INVALID_PARAMETER",
-            message = ex.message ?: "잘못된 파라미터입니다.",
+            errorCode = errorCode.code,
+            errorMessage = ex.message ?: "잘못된 파라미터입니다.",
+            userMessage = "요청 파라미터를 확인해주세요.",
             path = request.getDescription(false).substringAfter("uri=")
         )
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse)
+        return ResponseEntity.status(errorCode.status).body(errorResponse)
     }
 }
