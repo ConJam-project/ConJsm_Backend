@@ -36,22 +36,16 @@ class PerformanceController(
 
         logger.info("공연 목록 조회 API 호출 - page: $page, size: $size, genre: $genre, area: $area")
 
-        return try {
-            val response = performanceService.getPerformanceList(
-                page = page,
-                size = size,
-                genre = genre,
-                area = area,
-                startDate = startDate,
-                endDate = endDate
-            )
+        val response = performanceService.getPerformanceList(
+            page = page,
+            size = size,
+            genre = genre,
+            area = area,
+            startDate = startDate,
+            endDate = endDate
+        )
 
-            ResponseEntity.ok(response)
-
-        } catch (e: Exception) {
-            logger.error("공연 목록 조회 API 오류", e)
-            ResponseEntity.internalServerError().body(PerformanceListResponse())
-        }
+        return ResponseEntity.ok(response)
     }
 
     /**
@@ -65,20 +59,8 @@ class PerformanceController(
 
         logger.info("공연 상세 조회 API 호출 - ID: $performanceId")
 
-        return try {
-            val response = performanceService.getPerformanceDetail(performanceId)
-
-            if (response.performance != null) {
-                ResponseEntity.ok(response)
-            } else {
-                logger.warn("공연 정보를 찾을 수 없음 - ID: $performanceId")
-                ResponseEntity.notFound().build()
-            }
-
-        } catch (e: Exception) {
-            logger.error("공연 상세 조회 API 오류", e)
-            ResponseEntity.internalServerError().body(PerformanceDetailResponse())
-        }
+        val response = performanceService.getPerformanceDetail(performanceId)
+        return ResponseEntity.ok(response)
     }
 
     /**

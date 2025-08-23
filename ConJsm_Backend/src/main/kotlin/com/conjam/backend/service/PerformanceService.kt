@@ -3,6 +3,8 @@ package com.conjam.backend.service
 import com.conjam.backend.client.KopisApiClient
 import com.conjam.backend.dto.PerformanceDetailResponse
 import com.conjam.backend.dto.PerformanceListResponse
+import com.conjam.backend.exception.DataNotFoundException
+import com.conjam.backend.exception.InvalidParameterException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
@@ -41,23 +43,17 @@ class PerformanceService(
             else -> size
         }
 
-        return try {
-            val response = kopisApiClient.getPerformanceList(
-                page = validPage,
-                size = validSize,
-                genre = genre,
-                area = area,
-                startDate = startDate,
-                endDate = endDate
-            )
+        val response = kopisApiClient.getPerformanceList(
+            page = validPage,
+            size = validSize,
+            genre = genre,
+            area = area,
+            startDate = startDate,
+            endDate = endDate
+        )
 
-            logger.info("공연 목록 조회 완료 - ${response.performances.size}건")
-            response
-
-        } catch (e: Exception) {
-            logger.error("공연 목록 조회 중 오류 발생", e)
-            PerformanceListResponse() // 빈 응답 반환
-        }
+        logger.info("공연 목록 조회 완료 - ${response.performances.size}건")
+        return response
     }
 
     /**
@@ -70,19 +66,16 @@ class PerformanceService(
 
         // 파라미터 검증
         if (performanceId.isBlank()) {
-            logger.warn("공연 ID가 비어있음")
-            return PerformanceDetailResponse()
+            throw InvalidParameterException("공연 ID가 비어있습니다.")
         }
 
-        return try {
-            val response = kopisApiClient.getPerformanceDetail(performanceId)
+        val response = kopisApiClient.getPerformanceDetail(performanceId)
 
-            logger.info("공연 상세 조회 완료 - ${response.performance?.title}")
-            response
-
-        } catch (e: Exception) {
-            logger.error("공연 상세 조회 중 오류 발생", e)
-            PerformanceDetailResponse() // 빈 응답 반환
+        if (response.performance == null) {
+            throw DataNotFoundException("공연 정보를 찾을 수 없습니다. ID: $performanceId")
         }
+
+        logger.info("공연 상세 조회 완료 - ${response.performance.title}")
+        return response
     }
 }
