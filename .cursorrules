@@ -1,0 +1,146 @@
+# ConJam Backend - Cursor Rules
+
+## Project Overview
+ConJam Backend is a Spring Boot application written in Kotlin that provides performance information by integrating with the KOPIS (Korea Performance Information System) Open API. The project follows clean architecture principles with a focus on external API integration and proper error handling.
+
+## Technology Stack
+- **Language**: Kotlin 1.9.22
+- **Framework**: Spring Boot 3.2.0
+- **Build Tool**: Gradle with Kotlin DSL
+- **Database**: H2 (development), designed for future MySQL/PostgreSQL migration
+- **HTTP Client**: WebClient (Spring WebFlux) for external API calls
+- **XML Processing**: Jackson XML for KOPIS API response parsing
+- **Java Version**: 17
+
+## Architecture Guidelines
+
+### 1. Package Structure
+Follow the established package structure:
+```
+com.conjam.backend/
+├── client/           # External API clients
+├── config/           # Configuration classes
+├── controller/       # REST controllers
+├── dto/              # Data transfer objects
+├── exception/        # Custom exceptions and error handling
+└── service/          # Business logic layer
+```
+
+### 2. Naming Conventions
+- Use PascalCase for classes: `PerformanceController`, `KopisApiClient`
+- Use camelCase for functions and variables: `getPerformanceList`, `apiKey`
+- Use SCREAMING_SNAKE_CASE for constants: `KOPIS_API_KEY`
+- Suffix DTOs with appropriate descriptors: `PerformanceDto`, `ErrorResponse`
+
+### 3. External API Integration (KOPIS)
+- Always use WebClient for HTTP calls with proper error handling
+- Implement suspend functions for asynchronous operations
+- Use `@Value` annotations for configuration properties
+- Log all API calls with INFO level and errors with ERROR level
+- Wrap external API calls in try-catch blocks with custom exceptions
+- Default to reasonable date ranges (1 month back from current date)
+- Respect API limits (max 100 items per request)
+
+### 4. Error Handling
+- Use custom exceptions extending `BusinessException`
+- Implement global exception handling with `@RestControllerAdvice`
+- Return structured error responses with `ErrorResponse` DTO
+- Map HTTP status codes appropriately:
+  - `DataNotFoundException` → 404 NOT_FOUND
+  - `InvalidParameterException` → 400 BAD_REQUEST
+  - `ExternalApiException` → 502 BAD_GATEWAY
+
+### 5. Configuration Management
+- Use `application.yml` for configuration
+- Environment variables for sensitive data (API keys)
+- Provide `.env.example` for development setup
+- Never hardcode API keys or sensitive information
+
+### 6. Data Transfer Objects (DTOs)
+- Use Jackson XML annotations for KOPIS API responses:
+  - `@JacksonXmlRootElement` for root elements
+  - `@JacksonXmlProperty` for field mapping
+  - `@JacksonXmlElementWrapper` for collections
+- Make all DTO properties nullable with default values
+- Follow KOPIS API field naming conventions
+
+### 7. Logging Standards
+- Use SLF4J with LoggerFactory
+- Log levels:
+  - DEBUG: Detailed application flow
+  - INFO: Important business events and API calls
+  - WARN: Business exceptions and recoverable issues
+  - ERROR: System errors and external API failures
+- Include context in log messages (API URLs, response sizes, error details)
+
+### 8. API Design
+- Follow RESTful conventions
+- Use `/api/performances` as base path
+- Implement pagination with `page` and `size` parameters
+- Support filtering with query parameters: `genre`, `area`, `startDate`, `endDate`
+- Provide health check endpoint
+- Return meaningful HTTP status codes
+
+### 9. Validation and Input Handling
+- Validate pagination parameters (max size: 100)
+- Provide default values for optional parameters
+- Convert Korean genre names to KOPIS codes:
+  - 연극 → AAAA
+  - 뮤지컬 → GGGA
+  - 클래식 → CCCA
+  - 국악 → CCCC
+  - 대중음악 → CCCD
+  - 무용 → BBBC
+  - 복합 → EEEA
+  - 서커스/마술 → EEEB
+
+### 10. Development Practices
+- Use Kotlin idioms (data classes, null safety, string templates)
+- Implement lazy initialization for expensive objects
+- Use coroutines for asynchronous operations
+- Write comprehensive KDoc comments for public APIs
+- Include unit tests with TestContainers support
+
+### 11. Security Considerations
+- Never commit API keys to version control
+- Use environment variables for all sensitive configuration
+- Implement proper input validation to prevent injection attacks
+- Log security-relevant events appropriately
+
+### 12. Database Configuration
+- Use H2 for development with console enabled
+- Configure JPA with `create-drop` for development
+- Enable SQL logging for debugging
+- Design entities to be database-agnostic for future migration
+
+### 13. Build Configuration
+- Use Gradle Kotlin DSL for build scripts
+- Configure Kotlin compiler with strict JSR-305 compliance
+- Include necessary Spring Boot starters and Kotlin support libraries
+- Set up proper test dependencies including TestContainers
+
+### 14. Documentation
+- Maintain comprehensive README with setup instructions
+- Document all API endpoints with parameters and examples
+- Provide environment variable examples
+- Include deployment guidelines
+
+## Code Quality Standards
+- Follow Kotlin coding conventions
+- Use meaningful variable and function names
+- Keep functions focused and single-purpose
+- Implement proper separation of concerns
+- Write self-documenting code with clear intent
+- Handle edge cases and provide appropriate fallbacks
+- Use dependency injection properly with Spring annotations
+
+## When Adding New Features
+1. Follow the established architecture patterns
+2. Add appropriate error handling and logging
+3. Update documentation and API examples
+4. Consider performance implications for external API calls
+5. Implement proper validation for new parameters
+6. Add unit tests for new functionality
+7. Update configuration examples if needed
+
+This project prioritizes reliability, maintainability, and proper integration with external APIs while following Spring Boot and Kotlin best practices.

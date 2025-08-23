@@ -37,3 +37,16 @@ logging:
   level:
     com.conjam.backend: DEBUG
     org.springframework.web: DEBUG
+
+# SpringDoc OpenAPI 설정
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+    display-request-duration: true
+    show-extensions: true
+    show-common-extensions: true
+  packages-to-scan: com.conjam.backend.controller

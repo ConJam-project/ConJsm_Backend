@@ -37,6 +37,9 @@ dependencies {
     // XML 파싱 (KOPIS API는 XML 응답)
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml")
 
+    // Swagger/OpenAPI 문서화
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
+
     // 데이터베이스 (H2 - 개발용, 나중에 MySQL/PostgreSQL로 변경 가능)
     runtimeOnly("com.h2database:h2")
 
