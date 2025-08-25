@@ -49,3 +49,6 @@ yarn-error.log*
 # Application properties with sensitive data
 application-prod.yml
 application-local.yml
+
+# Environment example file (contains actual API key)
+env.example
